@@ -34,6 +34,15 @@ var data_array = [];
 var stationsAdded = [];
 var tempStation = {};
 
+async function parseTripsForStations(clientObj) {
+    const db = clientObj.db(dbName);
+    const col = db.collection('trips');
+    const docs = await col.find({}).toArray();
+    return new Promise (function (resolve,reject) {
+        resolve (data_array);
+    });
+}
+
 async function readFromFile(clientObj) {
     return new Promise( function (resolve, reject) {
         csv().fromFile(csvFilePath).on('json',(jsonObj) => {
@@ -80,6 +89,9 @@ async function readFromFile(clientObj) {
 
     var r3 = await clientObj.db(dbName).collection('trips').insertMany(data_array);
     console.log(r3.insertedCount);
+
+    var trips = await parseTripsForStations(clientObj);
+    console.log(trips);
 
     await disconnectMongo(clientObj);
 
