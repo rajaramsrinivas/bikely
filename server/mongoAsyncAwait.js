@@ -5,6 +5,13 @@ const assert = require('assert');
 
 const url = 'mongodb://localhost:27017';
 const dbName = 'bikely';
+const collections = ['trips','stations']; //list of all collections written to 
+var stationsFrequency = {};
+/* Dictionary of structure: {FromStation: [{toStation1: frequency},
+                                           {toStation2: frequency},
+                                          ]
+                            }
+*/                            
 
 async function connectMongo() {
     try {
@@ -34,64 +41,105 @@ var data_array = [];
 var stationsAdded = [];
 var tempStation = {};
 
+async function flushCollections(clientObj) {
+    /*Flushes collections in said object */
+    for (element in collections) {
+        console.log(element);
+        let status = await clientObj.db(dbName).collection('stations').deleteMany({});
+        console.log(status);
+    }
+}
+
 async function parseTripsForStations(clientObj) {
-    const db = clientObj.db(dbName);
-    const col = db.collection('trips');
-    const docs = await col.find({}).toArray();
+    /* Parses through trips to get stations
+       Also builds a frequency for each start to end route
+    */
+    console.log("Reading stations")
+    const docs = await clientObj.db(dbName).collection('trips').find({}).toArray();
+    console.log("Done reading stations");
+    var stations = []; //list of station objects containing details of each station
+    var stationids = []; //list of station ids
+    docs.forEach(element => {
+        var present_flag = stationids.includes(element.start_station_id);
+        //console.log(stationids);
+        //console.log("Skipped Station ID"+element.start_station_id);
+        if (stationids.length % 10 == 0) {
+            console.log("Loaded "+stationids.length+ " stations");
+        }
+        // Load station frequency
+        if (!stationsFrequency[element.start_station_id]) {
+            stationsFrequency[element.start_station_id] = [];
+            var tempDict = {};
+            tempDict[element.end_station_id] = 1;
+            stationsFrequency[element.start_station_id].push(tempDict);
+        }
+        else { //From station present
+            var endpresentFlag = stationsFrequency[element.start_station_id].filter(word => word[element.end_station_id]);
+            console.log("Present Flag " + endpresentFlag);
+            if (endpresentFlag.length>0) { 
+                stationsFrequency[element.start_station_id][element.end_station_id] +=1;
+                console.log("Yes");
+            }
+            else {
+                stationsFrequency[element.start_station_id][element.end_station_id] = 1;
+            }
+        }
+        if (!present_flag) {
+            stationids.push(element.start_station_id);
+            var tempStation = {};
+            tempStation.station_id = element.start_station_id;
+            tempStation.latitude = element.start_station_latitude;
+            tempStation.longitude = element.start_station_longitude;
+            tempStation.name = element.start_station_name;
+            stations.push(tempStation);
+        }
+    });
+    // Load the stations into db
+    // ToDo: Add Try catch
+    console.log("Parsed stations");
+    console.log("Writing to db....");
+    let status = await clientObj.db(dbName).collection('stations').insertMany(stations);
+    console.log("Written stations to db");
+    console.log("Trips and frequency");
+    //let freqStatus = await clientObj.db(dbName).collection('stationsFreq').insert(stationsFrequency);
+    //console.log(stationsFrequency);
     return new Promise (function (resolve,reject) {
-        resolve (data_array);
+        resolve (status.insertedCount);
     });
 }
 
 async function readFromFile(clientObj) {
     return new Promise( function (resolve, reject) {
         csv().fromFile(csvFilePath).on('json',(jsonObj) => {
-            tempStation = {};
-            tempStation.station_id = jsonObj.start_station_id;
-            tempStation.latitude = jsonObj.start_station_latitude;
-            tempStation.longitude = jsonObj.start_station_longitude;
-            tempStation.name = jsonObj.start_station_name;
-            present_flag = stations.filter(object => object.station_id == tempStation.station_id);
-            console.log(present_flag)
-            if (present_flag.length ==0 ) {
-                stations.push(tempStation)
-            }
             data_array.push(jsonObj);
-            })
-            .on('done',(jsonObj) => {
-                /*insertedCount = writeDocToDb(data_array,'trips').then( v => {
-                console.log("Inserted "+insertedCount+" records");
-                });
-                insertedCount = writeDocToDb(stations,'stations').then ( v => {
-                    console.log("Inserted "+insertedCount+" stations");
-                });*/
-                console.log('end');
-                resolve(data_array);
-                var data = JSON.stringify(data_array);
+        })
+        .on('done',(jsonObj) => {
+            /*insertedCount = writeDocToDb(data_array,'trips').then( v => {
+            console.log("Inserted "+insertedCount+" records");
             });
+            insertedCount = writeDocToDb(stations,'stations').then ( v => {
+                console.log("Inserted "+insertedCount+" stations");
+            });*/
+            console.log('end');
+            resolve(data_array);
+            var data = JSON.stringify(data_array);
+        });
     })
 }
 
 (async function() {
   try {
     const clientObj = await connectMongo();
- 
-    // Insert a single document
-    let r = await clientObj.db(dbName).collection('inserts').insertOne({a:1});
-    assert.equal(1, r.insertedCount);
-
-    // Insert multiple documents
-    var r2 = await clientObj.db(dbName).collection('inserts').insertMany([{a:2}, {a:3}]);
-    assert.equal(2, r2.insertedCount);
-
+    await flushCollections(clientObj);
+    console.log("Reading from File");
     let data_array = await readFromFile(clientObj);
-    console.log(data_array);
-
+    //console.log(data_array);
+    console.log("Writing trips to db");
     var r3 = await clientObj.db(dbName).collection('trips').insertMany(data_array);
     console.log(r3.insertedCount);
-
-    var trips = await parseTripsForStations(clientObj);
-    console.log(trips);
+    console.log("Parsing for stations")
+    var stationCount = await parseTripsForStations(clientObj);
+    console.log("Inserted "+stationCount+" stations");
 
     await disconnectMongo(clientObj);
 
