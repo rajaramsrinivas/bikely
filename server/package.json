@@ -1,0 +1,23 @@
+{
+  "name": "bikely_server",
+  "version": "1.0.0",
+  "description": "Server code for bikely",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "keywords": [
+    "Ford",
+    "bike",
+    "sharing",
+    "prediction"
+  ],
+  "author": "Rajaram Srinivasan, Pankhuri Sen",
+  "license": "MIT",
+  "dependencies": {
+    "csvtojson": "^1.1.9",
+    "express": "^4.16.3",
+    "file-system": "^2.2.2",
+    "mongodb": "^3.0.7"
+  }
+}
