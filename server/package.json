@@ -20,7 +20,8 @@
     "express": "^4.16.3",
     "file-system": "^2.2.2",
     "mathjs": "^4.2.1",
-    "mongodb": "^3.0.7"
+    "mongodb": "^3.0.7",
+    "pg": "^7.4.1"
   },
   "devDependencies": {
     "nodemon": "^1.17.3"
