@@ -31,6 +31,7 @@ var db = null;
 app.get('/', (req, res) => {
             //const docs = await clientObj.db(dbName).collection('trips').find({}).toArray();
             //res.sendFile(__dirname + '/../client/index.html');
+            res.set('Access-Control-Allow-Origin','*');
             db.collection('stations').find().toArray(function(err,results){
                 res.send(results); 
                 //res.sendFile(__dirname + '/index.html');
@@ -40,9 +41,15 @@ app.get('/stations', (req,res) => {
     console.log(__dirname);
     res.sendFile(__dirname+"/public/stations2.html");
 });
+app.get('/getfrequency', (req,res) => {
+    res.set('Access-Control-Allow-Origin','*');
+    db.collection('stationsFreqArray').find().toArray(function(err,stationFreqRes){
+        res.send(stationFreqRes);
+    });
+})
 app.get('/frequency', (req,res) => {
     console.log(__dirname);
-    res.sendFile(__dirname+"/public/mapbox.html");
+    res.sendFile(__dirname+"/public/mapboxTrial2.html");
 })
 app.get('/test', (req, res) => res.send('Hello World2!'))
 MongoClient.connect(url, (err, client) => {
