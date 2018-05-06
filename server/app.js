@@ -33,7 +33,8 @@ app.get('/', (req, res) => {
             //res.sendFile(__dirname + '/../client/index.html');
             res.set('Access-Control-Allow-Origin','*');
             db.collection('stations').find().toArray(function(err,results){
-                res.send(results); 
+                console.log(Object.values(Object.values(results)));
+                res.send(Object.values(results));
                 //res.sendFile(__dirname + '/index.html');
             })
         });
@@ -47,6 +48,12 @@ app.get('/getfrequency', (req,res) => {
         res.send(stationFreqRes);
     });
 })
+app.get('/getprobabilities', (req,res)=> {
+    res.set('Access-Control-Allow-Origin','*');
+    db.collection('dumpNew').find().toArray(function(err, probabilitiesRes) {
+        res.send(probabilitiesRes);
+    });
+});
 app.get('/frequency', (req,res) => {
     console.log(__dirname);
     res.sendFile(__dirname+"/public/mapboxTrial2.html");
