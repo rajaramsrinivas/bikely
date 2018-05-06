@@ -139,6 +139,7 @@ async function parseStationStatus(clientObj, data_array) {
                     currentElement.dockMu = math.std(currentElement.docks);
                 }
                 catch(ex) {
+                    console.log(err.stack);
                     console.log('couldnt resolve');
                 }
             })

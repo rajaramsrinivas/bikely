@@ -59,6 +59,7 @@ async function parseTripsForStations(clientObj) {
     console.log("Done reading stations");
     var stations = {}; //Station objects of the form {statioId: {station_details}}
     var stationids = []; //list of station ids
+    var stationsArray = [];
     docs.forEach(element => {
         var present_flag = stationids.includes(element.start_station_id);
         //console.log(stationids);
@@ -89,6 +90,7 @@ async function parseTripsForStations(clientObj) {
             tempStation.longitude = element.start_station_longitude;
             tempStation.name = element.start_station_name;
             stations[element.start_station_id] = tempStation;
+            stationsArray.push(tempStation);
         }
     });
     //Use stations frequency and station dictionaries to build an array of following format
@@ -110,7 +112,8 @@ async function parseTripsForStations(clientObj) {
     // ToDo: Add Try catch
     console.log("Parsed stations");
     console.log("Writing to db....");
-    let status = await clientObj.db(dbName).collection('stations').insert(stations);
+    let status = await clientObj.db(dbName).collection('stations').insert(stationsArray);
+    let status2 = await clientObj.db(dbName).collection('stationsMap').insert(stations); 
     console.log("Written stations to db");
     console.log("Trips and frequency");
     let freqStatus = await clientObj.db(dbName).collection('stationsFreq').insert(stationsFrequency);
@@ -144,11 +147,11 @@ async function readFromFile(clientObj) {
     const clientObj = await connectMongo();
     await flushCollections(clientObj);
     console.log("Reading from File");
-    //let data_array = await readFromFile(clientObj);
-    //console.log(data_array);
+    let data_array = await readFromFile(clientObj);
+    console.log(data_array);
     console.log("Writing trips to db");
-    //var r3 = await clientObj.db(dbName).collection('trips').insertMany(data_array);
-    //console.log(r3.insertedCount);
+    var r3 = await clientObj.db(dbName).collection('trips').insertMany(data_array);
+    console.log(r3.insertedCount);
     console.log("Parsing for stations")
     var stationCount = await parseTripsForStations(clientObj);
     console.log("Inserted "+stationCount+" stations");
