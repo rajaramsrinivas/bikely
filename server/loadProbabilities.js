@@ -69,7 +69,6 @@ async function parseStationStatus(clientObj, data_array) {
         }
         Processes bike availability only for busy time slots (8 AM - 6 PM)
     */
-   var r3 = await clientObj.db(dbName).collection('dump').insertMany(data_array);
    /* data_array is of form:
         {
         "_id" : ObjectId("5aeb7d20a935a30561b9a28f"),
@@ -140,13 +139,12 @@ async function parseStationStatus(clientObj, data_array) {
                 }
                 catch(ex) {
                     console.log(err.stack);
-                    console.log('couldnt resolve');
                 }
             })
         })
    })
-   console.log(stationStatusMap);
-   var r4 = await clientObj.db(dbName).collection('dumpNew').insert(stationStatusMap);
+   //console.log(stationStatusMap);
+   var r4 = await clientObj.db(dbName).collection('dumpNew').insert({"data":stationStatusMap});
 }
 
 (async function() {
