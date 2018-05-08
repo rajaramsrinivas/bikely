@@ -1,4 +1,5 @@
 const csvFilePath='../data/201801_fordgobike_tripdata.csv';
+const fsUtil = require('./fsutil.js');
 const csv=require('csvtojson');
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
@@ -113,7 +114,8 @@ async function parseTripsForStations(clientObj) {
     console.log("Parsed stations");
     console.log("Writing to db....");
     let status = await clientObj.db(dbName).collection('stations').insert(stationsArray);
-    let status2 = await clientObj.db(dbName).collection('stationsMap').insert(stations); 
+    let status2 = await clientObj.db(dbName).collection('stationsMap').insert(stations);
+    let status3 = await fsUtil.writeFile('data/stationsMap.json',JSON.stringify(stations));
     console.log("Written stations to db");
     console.log("Trips and frequency");
     let freqStatus = await clientObj.db(dbName).collection('stationsFreq').insert(stationsFrequency);

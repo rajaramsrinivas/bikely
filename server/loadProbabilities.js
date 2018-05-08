@@ -1,4 +1,5 @@
 const csvFilePath='../data/status_3_months.csv';
+const fsutil = require('./fsutil.js');
 const math = require('mathjs');
 const csv=require('csvtojson');
 const MongoClient = require('mongodb').MongoClient;
@@ -123,6 +124,7 @@ async function parseStationStatus(clientObj, data_array) {
    });
    //populate mean and standard deviations
    console.log(stationStatusMap);
+   console.log("LENGTH IS "+Object.keys(stationStatusMap).length);
    Object.keys(stationStatusMap).forEach(stationStationId => {
        Object.keys(stationStatusMap[stationStationId]).forEach(stationStatusDay => { //For each day
            Object.keys(stationStatusMap[stationStationId][stationStatusDay]).forEach(stationStatusTime => {
@@ -136,6 +138,8 @@ async function parseStationStatus(clientObj, data_array) {
                     currentElement.bikeMu = math.std(currentElement.bikes);
                     currentElement.dockAvg = math.mean(currentElement.docks);
                     currentElement.dockMu = math.std(currentElement.docks);
+                    delete currentElement.bikes;
+                    delete currentElement.docks; //to save space
                 }
                 catch(ex) {
                     console.log(err.stack);
@@ -145,6 +149,7 @@ async function parseStationStatus(clientObj, data_array) {
    })
    //console.log(stationStatusMap);
    var r4 = await clientObj.db(dbName).collection('dumpNew').insert({"data":stationStatusMap});
+   var r5 = await fsutil.writeFile('data/probabilities.json',JSON.stringify(stationStatusMap));
 }
 
 (async function() {

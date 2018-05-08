@@ -12,13 +12,6 @@ function init(){
 		center : latlng,
 		mapTypeId : google.maps.MapTypeId.ROADMAP
 	};
-  var coordinates = [
-	  {lat:42.350702, lng:-71.107180},
-	  {lat:42.359043, lng:-71.093457},
-	  {lat:42.373454, lng:-71.118863},
-	  {lat:42.407484, lng:-71.119023},  
-	  {lat:42.335549, lng:-71.168495}
-  ];
   coordinates = jsonData;
   console.log(jsonData.length);
   var map = new google.maps.Map(document.getElementById('map'), myOptions);
@@ -28,17 +21,27 @@ function init(){
 	//
 	// -------------------------------------------------------
 	var processMarkers = function(element, index) {
-		console.log(element)
+		console.log(element.latitude);
+		console.log(element.longitude);
 		color = ['red','green','orange'];
 		var latlng = new google.maps.LatLng(element['latitude'],element['longitude']);
-		var rand = Math.floor(Math.random() * 3);
+		var availability = Math.round(Math.max(element.avg_bikes - element.std_bikes,0),2); //Mu minus one sigma
+		if (availability < 3) {
+			color = 'red';
+		}
+		else if (availability < 6) {
+			color = 'orange';
+		}
+		else {
+			color = 'green';
+		}
 		var marker = new google.maps.Marker({
 					position: latlng,
 					map: map,
-					title : "Hello World: " + index,
+					title : "Station: " + element.station_name,
 					icon: { 
 						path:google.maps.SymbolPath.CIRCLE,
-						fillColor: color[rand],
+						fillColor: color,
 						fillOpacity: 0.8,
 						scale:10,
 						strokeWeight:0
@@ -48,14 +51,15 @@ function init(){
 		marker.addListener('click', function() {
 			infoWindow.open(map, marker);
 		});
-		var contentString = "<b>Hello World </b>" + rand;
+		var contentString = `<p><b>`+element.station_name+`</b></p>
+							 <p>Expected Availability: ` + availability+"</p>";
 		infoWindow.setContent(contentString);
 
 	};
 	coordinates.forEach(processMarkers);
 }
 var jsonData = null;
-fetch('http://localhost:3000')
+fetch('http://localhost:3000/probability?dow=Monday&hour=11&minute=30')
 //fetch('http://ec2-54-174-201-85.compute-1.amazon^ww.com')
     .then(response => response.json())
     .then(data => {
