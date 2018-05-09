@@ -27,7 +27,7 @@ function init(){
 		console.log(element.longitude);
 		color = ['red','green','orange'];
 		var latlng = new google.maps.LatLng(element['latitude'],element['longitude']);
-		var availability = Math.round(Math.max(element.avg_bikes - element.std_bikes,0),2); //Mu minus one sigma
+		var availability = Math.round(Math.max(element.avg_docks - element.std_docks,0),2); //Mu minus one sigma
 		if (availability < 3) {
 			color = 'red';
 		}
