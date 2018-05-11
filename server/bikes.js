@@ -93,28 +93,34 @@ app.get('/planapi', async(req,res) => {
                        ` AND end_station_id = `+stationsReverseMap[destination];
     console.log(queryString);
     var someResult = await pool.query(queryString);
-    var duration = Math.round((someResult.rows[0].average_duration)/60);
-    var responseDict = {}
-    responseDict.duration = duration;
-    responseDict.fromStation = source;
-    responseDict.toStation = destination;
-    var queryString = `SELECT station_id, dow, hour, minute, avg_bikes, avg_docks,
-                            std_bikes, std_docks, station_name, latitude, longitude
-                    FROM station_probabilities JOIN station_master USING (station_id)
-                    WHERE dow = '`+dayReverseMap[dow]+`' AND hour = `+ hour +' AND minute = '+minute
-                    +" AND station_id in ("+stationIds[0]+","+stationIds[1]+")";
-    console.log(queryString);
-    var resultSet = await pool.query(queryString);
-    resultSet = resultSet.rows;
-    resultSet.forEach(element => {
-        if (element.station_id == stationsReverseMap[destination]) {
-            responseDict.docks = element.avg_docks - element.std_docks;
-        }
-        else {
-            responseDict.bikes = element.avg_bikes - element.std_bikes;
-        }
-    })    
-    res.send(responseDict);
+    console.log(someResult.rows);
+    if (someResult.rows.length > 0) {
+        var duration = Math.round((someResult.rows[0].average_duration)/60);
+        var responseDict = {}
+        responseDict.duration = duration;
+        responseDict.fromStation = source;
+        responseDict.toStation = destination;
+        var queryString = `SELECT station_id, dow, hour, minute, avg_bikes, avg_docks,
+                                std_bikes, std_docks, station_name, latitude, longitude
+                        FROM station_probabilities JOIN station_master USING (station_id)
+                        WHERE dow = '`+dayReverseMap[dow]+`' AND hour = `+ hour +' AND minute = '+minute
+                        +" AND station_id in ("+stationIds[0]+","+stationIds[1]+")";
+        console.log(queryString);
+        var resultSet = await pool.query(queryString);
+        resultSet = resultSet.rows;
+        resultSet.forEach(element => {
+            if (element.station_id == stationsReverseMap[destination]) {
+                responseDict.docks = element.avg_docks - element.std_docks;
+            }
+            else {
+                responseDict.bikes = element.avg_bikes - element.std_bikes;
+            }
+        })    
+        res.send(responseDict);
+    }
+    else {
+        res.send({'error':'No such trips exist'})
+    }
 })
 app.listen(3000, () => {
     console.log('Example app listening on port 3000!');
