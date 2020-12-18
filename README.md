@@ -1,2 +1,2 @@
 # bikely
-Analyzing Fod GoBike dataset to predict future availability
+Analyzing Ford GoBike dataset to predict availability of bikes in a bike stand
